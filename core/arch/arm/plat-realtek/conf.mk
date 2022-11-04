@@ -11,6 +11,7 @@ $(call force,CFG_TA_ARM32_NO_HARD_FLOAT_SUPPORT,y)
 $(call force,CFG_ARM32_core,y)
 $(call force,CFG_BOOT_SECONDARY_REQUEST,y)
 $(call force,CFG_PSCI_ARM32,y)
+$(call force,CFG_PM_ARM32,y)
 
 CFG_WITH_STATS ?= y
 CFG_USER_TA_TARGETS = ta_arm32
