@@ -1,5 +1,9 @@
 PLATFORM_FLAVOR ?= sheipa_armv7a
 
+ifeq ($(PLATFORM_FLAVOR),sheipa_armv7a)
+include core/arch/arm/cpu/cortex-a7.mk
+endif
+
 $(call force,CFG_8250_UART,y)
 $(call force,CFG_GENERIC_BOOT,y)
 $(call force,CFG_GIC,y)
