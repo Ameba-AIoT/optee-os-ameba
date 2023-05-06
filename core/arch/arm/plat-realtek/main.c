@@ -50,6 +50,7 @@
 #include <string.h>
 #include <trace.h>
 #include <io.h>
+#include <kernel/delay.h>
 
 
 #define REALTEK_AEMBAD2_NUM_CORE		2
@@ -102,6 +103,9 @@
 #define SYSTIM_CNTFID0					(0x20)
 #define SYSTIM_CNTCV_RO					(0x0)
 #define SYSTIM_CNT_EN_BIT				(0x1)
+
+
+#define TRIG							(((uint32_t) 1) << 31)
 
 
 typedef struct {
@@ -195,7 +199,7 @@ static void rtk_cpu1_power_down(void)
 {
 	uint32_t val;
 
-	DMSG("rtk_cpu1_power_down\n");
+	//DMSG("rtk_cpu1_power_down\n");
 
 	val =  io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_ISO));
 	val |= (HSYS_ISO_HP_AP_CORE(0x2));
@@ -216,7 +220,7 @@ static void rtk_cpu1_power_on(void)
 {
 	uint32_t val;
 
-	DMSG("rtk_cpu1_power_on\n");
+	//DMSG("rtk_cpu1_power_on\n");
 
 
 	val =  io_read32((vaddr_t)phys_to_virt_io(CA32_BASE + CA32_C0_RST_CTRL));
@@ -227,29 +231,26 @@ static void rtk_cpu1_power_on(void)
 	val =  io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_ISO));
 	val |= (HSYS_ISO_HP_AP_CORE(0x2));
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_ISO), val);
-	DelayNop(5000000);
+	udelay(50);
 
 	val =  io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC));
 	val |= (HSYS_PSW_HP_AP_CORE(0x3));
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC), val);
-	DelayNop(500000);
+	udelay(50);
 
 	val =  io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC));
 	val |= (HSYS_PSW_HP_AP_CORE_2ND(0x3));
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC), val);
-	DelayNop(5000000);
-
+	udelay(500);
 
 	val =  io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_ISO));
 	val &= ~(HSYS_ISO_HP_AP_CORE(0x3));
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_ISO), val);
-	DelayNop(50000);
+	udelay(50);
 
 	val =  io_read32((vaddr_t)phys_to_virt_io(CA32_BASE + CA32_C0_RST_CTRL));
 	val |= (CA32_NCOREPORESET(0x2) | CA32_NCORERESET(0x2) | CA32_BIT_NRESETSOCDBG | CA32_BIT_NL2RESET | CA32_BIT_NGICRESET);
 	io_write32((vaddr_t)phys_to_virt_io(CA32_BASE + CA32_C0_RST_CTRL), val);
-
-	DelayNop(50000);
 
 }
 
@@ -354,7 +355,7 @@ static int rtk_pg_enter(uint32_t arg __unused)
 {
 	uint32_t msg_idx;
 	uint32_t val;
-	uint32_t *ipc_msg_addr;
+	void *ipc_msg_addr;
 
 	//DMSG("=== Enter PG ===\n");
 
@@ -371,8 +372,8 @@ static int rtk_pg_enter(uint32_t arg __unused)
 
 	// IPC_Dir: 0x00000020, IPC_ChNum: 3
 	msg_idx = 16 * ((0x00000020 >> 4) & 0xF) + 8 * (0x00000020 & 0xF) + IPC_CHAN_NUM;
-	ipc_msg_addr = (uint32_t *)(phys_to_virt(KM0_IPC_RAM, MEM_AREA_RAM_NSEC) + msg_idx * 16);
-	memcpy((void *)ipc_msg_addr, (void *)&pm_param, sizeof(SLEEP_ParamDef));
+	ipc_msg_addr =(void *)((uint32_t)phys_to_virt(KM0_IPC_RAM, MEM_AREA_RAM_NSEC) + msg_idx * 16);
+	memcpy(ipc_msg_addr, (void *)&pm_param, sizeof(SLEEP_ParamDef));
 	dcache_clean_range(ipc_msg_addr, sizeof(SLEEP_ParamDef));
 
 	val = io_read32((vaddr_t)phys_to_virt(SYSTEM_HP + IPCAP_REG_OFFSET, MEM_AREA_IO_SEC));
@@ -381,7 +382,7 @@ static int rtk_pg_enter(uint32_t arg __unused)
 
 	// wait for shutdown
 	while (1) {
-		wfi();
+		asm volatile("wfe");
 	}
 
 	// should never reach here
@@ -423,7 +424,7 @@ static void sm_restore_mpc_regs(void)
 
 
 static int rtk_cpu_suspend(uint32_t power_state __unused, uintptr_t entry,
-					struct sm_nsec_ctx *nsec)
+						   struct sm_nsec_ctx *nsec)
 {
 	int ret;
 	unsigned int temp1 = 0;
@@ -499,14 +500,14 @@ int psci_cpu_suspend(uint32_t power_state,
 int psci_affinity_info(uint32_t affinity, uint32_t lowest_affinity_level)
 {
 	unsigned int pos = get_core_pos_mpidr(affinity);
-	unsigned int pos1 = get_core_pos();
+	//unsigned int pos1 = get_core_pos();
 
 	if ((pos >= REALTEK_AEMBAD2_NUM_CORE) ||
 		(lowest_affinity_level > PSCI_AFFINITY_LEVEL_ON)) {
 		return PSCI_RET_INVALID_PARAMETERS;
 	}
 
-	DMSG("core %zu, cur core %zu,  state %u", pos, pos1, core_state[pos]);
+	//DMSG("core %zu, cur core %zu,  state %u", pos, pos1, core_state[pos]);
 
 	if (core_state[pos] == CORE_OFF) {
 		rtk_cpu1_power_down();
@@ -536,7 +537,7 @@ int psci_cpu_on(uint32_t core_id, uint32_t entry, uint32_t context_id)
 	}
 	core_state[pos] = CORE_ON;
 
-	DelayNop(1000000);
+	DelayNop(100000);
 
 	boot_set_core_ns_entry(pos, entry, context_id);
 
@@ -556,7 +557,7 @@ int psci_cpu_off(void)
 
 	core_state[pos] = CORE_OFF;
 
-	DMSG("core pos: %zu,  %zu", core, pos);
+	//DMSG("core pos: %zu,  %zu", core, pos);
 
 	psci_armv7_cpu_off();
 	thread_mask_exceptions(THREAD_EXCP_ALL);
@@ -573,13 +574,11 @@ int psci_cpu_off(void)
 
 void psci_system_reset(void)
 {
-	uint32_t Trig = 0x1 << 31;
-
-	DMSG("core %u", get_core_pos());
+	//DMSG("core %u", get_core_pos());
 
 	/*system warm reset*/
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_LP + REG_LSYS_SW_RST_TRIG), SYS_RESET_KEY);
-	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_LP + REG_LSYS_SW_RST_CTRL), Trig);
+	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_LP + REG_LSYS_SW_RST_CTRL), TRIG);
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_LP + REG_LSYS_SW_RST_TRIG), SYS_RESET_TRIG);
 
 	while (1) {
