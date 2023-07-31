@@ -21,6 +21,7 @@ CFG_WITH_STATS ?= y
 CFG_USER_TA_TARGETS = ta_arm32
 ta-targets += ta_arm32
 
+CFG_MMAP_REGIONS ?= 20
 ifeq (${CONFIG_SOC_CPU_ARMv8_2},y)
 CFG_ARM_GICV3 ?= y
 endif

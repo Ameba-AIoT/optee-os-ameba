@@ -41,6 +41,7 @@
 #include <kernel/tee_time.h>
 #include <kernel/panic.h>
 #include <kernel/cache_helpers.h>
+#include <kernel/tee_common_otp.h>
 #include <mm/core_memprot.h>
 #include <mm/core_mmu.h>
 #include <sm/optee_smc.h>
@@ -62,6 +63,7 @@
 #define KM0_RAM							0x23000000
 #define KM0_RAM_SIZE					0x20000
 #define KM0_IPC_RAM						0x2301FD00
+#define SYSTEM_HP_SRAM					0x30000000
 #define MPC1_BASE_S						0x51001A00
 #define PLAT_SHEIPA_WARM_BOOT_BASE		(PLAT_SHEIPA_TRUSTED_MAILBOX_BASE + 0x100)
 #define CNT_CONTROL_BASE				0xB0002000
@@ -107,6 +109,8 @@
 
 #define TRIG							(((uint32_t) 1) << 31)
 
+#define BOOT_ROM_DERIVED_KEY			0x0404
+#define PLAT_HW_UNIQUE_KEY_LENGTH		16
 
 typedef struct {
 	unsigned int IDAU_BARx;		/*!< ,	Address offset: 0x00 */
@@ -163,6 +167,7 @@ register_phys_mem_pgdir(MEM_AREA_IO_SEC, CNT_CONTROL_BASE, 0x1000);
 
 register_phys_mem_pgdir(MEM_AREA_IO_SEC, MPC1_BASE_S, 0x1000);
 
+register_phys_mem_pgdir(MEM_AREA_RAM_SEC, SYSTEM_HP_SRAM, 0x1000);
 
 
 static inline void DelayNop(int count)
@@ -584,5 +589,15 @@ void psci_system_reset(void)
 	while (1) {
 		wfi();
 	}
+}
+
+TEE_Result tee_otp_get_hw_unique_key(struct tee_hw_unique_key *hwkey)
+{
+	vaddr_t sram_base = (vaddr_t)phys_to_virt(SYSTEM_HP_SRAM, MEM_AREA_RAM_SEC);
+
+	void *derived_key = sram_base + BOOT_ROM_DERIVED_KEY;
+	memcpy(&hwkey->data[0], derived_key, sizeof(hwkey->data));
+
+	return TEE_SUCCESS;
 }
 
