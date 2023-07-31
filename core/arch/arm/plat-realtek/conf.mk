@@ -10,7 +10,6 @@ $(call force,CFG_GIC,y)
 $(call force,CFG_HWSUPP_MEM_PERM_PXN,y)
 $(call force,CFG_PM_STUBS,y)
 $(call force,CFG_SECURE_TIME_SOURCE_CNTPCT,y)
-$(call force,CFG_TA_ARM32_NO_HARD_FLOAT_SUPPORT,y)
 
 $(call force,CFG_ARM32_core,y)
 $(call force,CFG_BOOT_SECONDARY_REQUEST,y)
