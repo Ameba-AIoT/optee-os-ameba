@@ -457,6 +457,9 @@ static int rtk_cpu_suspend(uint32_t power_state __unused, uintptr_t entry,
 	/* restore unbanked regs */
 	sm_restore_unbanked_regs(&nsec->ub_regs);
 
+	/*restore mpc regs*/
+	sm_restore_mpc_regs();
+
 	/* enable smp bit */
 	__asm volatile("MRRC p15, 1, %0, %1, c15":"=r"(temp1), "=r"(temp2));
 	temp1 |= 0x40;
@@ -476,9 +479,6 @@ static int rtk_cpu_suspend(uint32_t power_state __unused, uintptr_t entry,
 	/* enable timer */
 	sys_timer_enable(1);
 	arm_arch_timer_enable(1);
-
-	/*restore mpc regs*/
-	sm_restore_mpc_regs();
 
 	//DMSG("=== Back from PG ===\n");
 
