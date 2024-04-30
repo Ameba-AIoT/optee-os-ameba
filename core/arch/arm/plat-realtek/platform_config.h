@@ -33,10 +33,10 @@
 #define STACK_ALIGNMENT		64
 
 #ifdef CFG_WITH_PAGER
-#error "Pager not supported for sheipa"
+#error "Pager not supported for amebasmart"
 #endif
 
-#if defined(PLATFORM_FLAVOR_sheipa_armv8a) || defined(PLATFORM_FLAVOR_sheipa_armv7a)
+#if defined(PLATFORM_FLAVOR_amebasmart_armv8a) || defined(PLATFORM_FLAVOR_amebasmart_armv7a)
 #ifdef CFG_ARM_GICV3
 #define GIC_BASE		0x02000000
 #define GICD_OFFSET		0x00100000
@@ -69,8 +69,8 @@
 #define TEE_SHMEM_START		CFG_SHMEM_START
 #define TEE_SHMEM_SIZE		CFG_SHMEM_SIZE
 
-#define PLAT_SHEIPA_TRUSTED_MAILBOX_BASE	0x701B0000
-#define PLAT_SHEIPA_TRUSTED_MAILBOX_SIZE	(0x100)
+#define PLAT_AMEBASMART_TRUSTED_MAILBOX_BASE	0x701B0000
+#define PLAT_AMEBASMART_TRUSTED_MAILBOX_SIZE	(0x100)
 #else
 #error "Unknown platform flavor"
 #endif

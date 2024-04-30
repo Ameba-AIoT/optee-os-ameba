@@ -1,6 +1,6 @@
-PLATFORM_FLAVOR ?= sheipa_armv7a
+PLATFORM_FLAVOR ?= amebasmart_armv7a
 
-ifeq ($(PLATFORM_FLAVOR),sheipa_armv7a)
+ifeq ($(PLATFORM_FLAVOR),amebasmart_armv7a)
 include core/arch/arm/cpu/cortex-a7.mk
 endif
 

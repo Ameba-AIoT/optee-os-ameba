@@ -65,7 +65,7 @@
 #define KM0_IPC_RAM						0x2301FD00
 #define SYSTEM_HP_SRAM					0x30000000
 #define MPC1_BASE_S						0x51001A00
-#define PLAT_SHEIPA_WARM_BOOT_BASE		(PLAT_SHEIPA_TRUSTED_MAILBOX_BASE + 0x100)
+#define PLAT_AMEBASMART_WARM_BOOT_BASE		(PLAT_AMEBASMART_TRUSTED_MAILBOX_BASE + 0x100)
 #define CNT_CONTROL_BASE				0xB0002000
 
 
@@ -159,7 +159,7 @@ register_phys_mem_pgdir(MEM_AREA_IO_SEC, GICD_BASE, GIC_DIST_REG_SIZE);
 register_phys_mem_pgdir(MEM_AREA_IO_SEC, GICC_BASE, GIC_DIST_REG_SIZE);
 
 register_phys_mem_pgdir(MEM_AREA_IO_SEC,
-						PLAT_SHEIPA_TRUSTED_MAILBOX_BASE, PLAT_SHEIPA_TRUSTED_MAILBOX_SIZE);
+						PLAT_AMEBASMART_TRUSTED_MAILBOX_BASE, PLAT_AMEBASMART_TRUSTED_MAILBOX_SIZE);
 
 register_phys_mem_pgdir(MEM_AREA_RAM_NSEC, KM0_RAM, KM0_RAM_SIZE);
 
@@ -325,9 +325,9 @@ static void release_secondary_early_hpen(size_t pos)
 	} *mailbox;
 
 	if (cpu_mmu_enabled()) {
-		mailbox = phys_to_virt(PLAT_SHEIPA_TRUSTED_MAILBOX_BASE, MEM_AREA_IO_SEC);
+		mailbox = phys_to_virt(PLAT_AMEBASMART_TRUSTED_MAILBOX_BASE, MEM_AREA_IO_SEC);
 	} else {
-		mailbox = (void *)PLAT_SHEIPA_TRUSTED_MAILBOX_BASE;
+		mailbox = (void *)PLAT_AMEBASMART_TRUSTED_MAILBOX_BASE;
 	}
 
 	if (!mailbox) {
@@ -365,7 +365,7 @@ static int rtk_pg_enter(uint32_t arg __unused)
 	//DMSG("=== Enter PG ===\n");
 
 	// set warm boot entry addr and flag
-	io_write32((vaddr_t)phys_to_virt(PLAT_SHEIPA_WARM_BOOT_BASE, MEM_AREA_IO_SEC), TEE_LOAD_ADDR);
+	io_write32((vaddr_t)phys_to_virt(PLAT_AMEBASMART_WARM_BOOT_BASE, MEM_AREA_IO_SEC), TEE_LOAD_ADDR);
 	val = io_read32((vaddr_t)phys_to_virt(SYSTEM_LP + REG_LSYS_BOOT_REASON_SW, MEM_AREA_IO_SEC));
 	val |= LSYS_BIT_AP_WAKE_FROM_PG;
 	io_write32((vaddr_t)phys_to_virt(SYSTEM_LP + REG_LSYS_BOOT_REASON_SW, MEM_AREA_IO_SEC), val);
