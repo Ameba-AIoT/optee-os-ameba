@@ -210,13 +210,19 @@ static void rtk_cpu1_power_down(void)
 	val |= (HSYS_ISO_HP_AP_CORE(0x2));
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_ISO), val);
 
+	udelay(50);
+
 	val = io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC));
 	val &= ~(HSYS_PSW_HP_AP_CORE_2ND(0x2));
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC), val);
 
+	udelay(50);
+
 	val =  io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC));
 	val &= ~(HSYS_PSW_HP_AP_CORE(0x2));
 	io_write32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_PWC), val);
+
+	udelay(50);
 }
 
 
@@ -231,6 +237,8 @@ static void rtk_cpu1_power_on(void)
 	val =  io_read32((vaddr_t)phys_to_virt_io(CA32_BASE + CA32_C0_RST_CTRL));
 	val &= (~(CA32_NCOREPORESET(0x2) | CA32_NCORERESET(0x2)));
 	io_write32((vaddr_t)phys_to_virt_io(CA32_BASE + CA32_C0_RST_CTRL), val);
+
+	udelay(50);
 
 
 	val =  io_read32((vaddr_t)phys_to_virt_io(SYSTEM_HP + REG_HSYS_HP_ISO));
@@ -256,6 +264,8 @@ static void rtk_cpu1_power_on(void)
 	val =  io_read32((vaddr_t)phys_to_virt_io(CA32_BASE + CA32_C0_RST_CTRL));
 	val |= (CA32_NCOREPORESET(0x2) | CA32_NCORERESET(0x2) | CA32_BIT_NRESETSOCDBG | CA32_BIT_NL2RESET | CA32_BIT_NGICRESET);
 	io_write32((vaddr_t)phys_to_virt_io(CA32_BASE + CA32_C0_RST_CTRL), val);
+
+	udelay(50);
 
 }
 
@@ -542,7 +552,7 @@ int psci_cpu_on(uint32_t core_id, uint32_t entry, uint32_t context_id)
 	}
 	core_state[pos] = CORE_ON;
 
-	DelayNop(100000);
+	mdelay(1);
 
 	boot_set_core_ns_entry(pos, entry, context_id);
 
