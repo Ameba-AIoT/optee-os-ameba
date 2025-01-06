@@ -12,22 +12,13 @@
 #include <kernel/dt.h>
 
 /* uart register defines */
-#define UART_RHR	0x0
-#define UART_THR	0x0
-#define UART_IER	0x4
-#define UART_ISR	0x8
-#define UART_FCR	0x8
-#define UART_LCR	0xc
-#define UART_MCR	0x10
-#define UART_LSR	0x14
-#define UART_MSR	0x18
-#define UART_SPR	0x1c
+#define LOGUART_UART_LSR	0x14
+#define LOGUART_UART_RBR	0x24
+#define LOGUART_UART_THR4	0x68
 
-/* uart status register bits */
-#define LSR_TEMT	0x40 /* Transmitter empty */
-#define LSR_THRE	0x20 /* Transmit-hold-register empty */
-#define LSR_EMPTY	(LSR_TEMT | LSR_THRE)
-#define LSR_DR		0x01 /* DATA Ready */
+#define LOGUART_BIT_DRDY			(1<<0) /* DATA Ready */
+#define LOGUART_BIT_TP4F_EMPTY		(1<<19)
+
 
 static vaddr_t chip_to_base(struct serial_chip *chip)
 {
@@ -42,10 +33,10 @@ static void serial8250_uart_flush(struct serial_chip *chip)
 	vaddr_t base = chip_to_base(chip);
 
 	while (1) {
-		uint32_t state = io_read32(base + UART_LSR);
+		uint32_t state = io_read32(base + LOGUART_UART_LSR);
 
 		/* Wait until transmit FIFO is empty */
-		if ((state & LSR_EMPTY) == LSR_EMPTY)
+		if ((state & LOGUART_BIT_TP4F_EMPTY) == LOGUART_BIT_TP4F_EMPTY)
 			break;
 	}
 }
@@ -54,7 +45,7 @@ static bool serial8250_uart_have_rx_data(struct serial_chip *chip)
 {
 	vaddr_t base = chip_to_base(chip);
 
-	return (io_read32(base + UART_LSR) & LSR_DR);
+	return (io_read32(base + LOGUART_UART_LSR) & LOGUART_BIT_DRDY);
 }
 
 static int serial8250_uart_getchar(struct serial_chip *chip)
@@ -65,7 +56,7 @@ static int serial8250_uart_getchar(struct serial_chip *chip)
 		/* Transmit FIFO is empty, waiting again */
 		;
 	}
-	return io_read32(base + UART_RHR) & 0xff;
+	return io_read32(base + LOGUART_UART_RBR) & 0xff;
 }
 
 static void serial8250_uart_putc(struct serial_chip *chip, int ch)
@@ -75,7 +66,7 @@ static void serial8250_uart_putc(struct serial_chip *chip, int ch)
 	serial8250_uart_flush(chip);
 
 	/* Write out character to transmit FIFO */
-	io_write32(base + UART_THR, ch);
+	io_write32(base + LOGUART_UART_THR4, ch);
 }
 
 static const struct serial_ops serial8250_uart_ops = {
@@ -154,7 +145,7 @@ static const struct serial_driver serial8250_driver = {
 };
 
 static const struct dt_device_match serial8250_match_table[] = {
-	{ .compatible = "snps,dw-apb-uart" },
+	{ .compatible = "snps,dw-apb-uart" },  //TODO: "realsil, ameba_serial"
 	{ 0 }
 };
 

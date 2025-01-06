@@ -8,7 +8,7 @@
 #include <types_ext.h>
 #include <drivers/serial.h>
 
-#define SERIAL8250_UART_REG_SIZE 0x20
+#define SERIAL8250_UART_REG_SIZE 0x100
 
 struct serial8250_uart_data {
 	struct io_pa_va base;
