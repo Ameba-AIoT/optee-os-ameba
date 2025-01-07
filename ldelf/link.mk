@@ -19,6 +19,10 @@ link-ldflags += --sort-section=alignment
 link-ldflags += -z max-page-size=4096 # OP-TEE always uses 4K alignment
 link-ldflags += $(link-ldflags$(sm))
 
+ifeq ($(CFG_ARM32_$(sm)), y)
+link-ldflags += $(call ld-option,--no-warn-execstack)
+endif
+
 link-ldadd  = $(addprefix -L,$(libdirs))
 link-ldadd += --start-group $(addprefix -l,$(libnames)) --end-group
 ldargs-ldelf.elf := $(link-ldflags) $(objs) $(link-ldadd) $(libgcc$(sm))
